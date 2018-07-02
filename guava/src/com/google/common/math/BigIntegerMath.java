@@ -32,6 +32,9 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import org.checkerframework.checker.index.qual.LessThan;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.Positive;
 
 /**
  * A class for arithmetic on values of type {@code BigInteger}.
@@ -144,8 +147,10 @@ public final class BigIntegerMath {
    *     is not a power of ten
    */
   @GwtIncompatible // TODO
-  @SuppressWarnings("fallthrough")
-  public static int log10(BigInteger x, RoundingMode mode) {
+  @SuppressWarnings({"fallthrough",
+          "lowerbound:argument.type.incompatible"// BigIntegerMath.log10() only takes in positive x values
+          })
+  public static int log10(@Positive BigInteger x, RoundingMode mode) {
     checkPositive("x", x);
     if (fitsInLong(x)) {
       return LongMath.log10(x.longValue(), mode);
@@ -332,7 +337,10 @@ public final class BigIntegerMath {
    *
    * @throws IllegalArgumentException if {@code n < 0}
    */
-  public static BigInteger factorial(int n) {
+  @SuppressWarnings(value = {"lowerbound:assignment.type.incompatible",// line 350: Since `n` is required to be non negative
+          // IntMath.divide() will also return a non negative value
+  })
+  public static BigInteger factorial(@NonNegative int n) {
     checkNonNegative("n", n);
 
     // If the factorial is small enough, just use LongMath to do it.
@@ -341,11 +349,11 @@ public final class BigIntegerMath {
     }
 
     // Pre-allocate space for our list of intermediate BigIntegers.
-    int approxSize = IntMath.divide(n * IntMath.log2(n, CEILING), Long.SIZE, CEILING);
+    @NonNegative int approxSize = IntMath.divide(n * IntMath.log2(n, CEILING), Long.SIZE, CEILING);
     ArrayList<BigInteger> bignums = new ArrayList<>(approxSize);
 
     // Start from the pre-computed maximum long factorial.
-    int startingNumber = LongMath.factorials.length;
+    @Positive int startingNumber = LongMath.factorials.length;
     long product = LongMath.factorials[startingNumber - 1];
     // Strip off 2s from this value.
     int shift = Long.numberOfTrailingZeros(product);
@@ -391,7 +399,7 @@ public final class BigIntegerMath {
     return listProduct(nums, 0, nums.size());
   }
 
-  static BigInteger listProduct(List<BigInteger> nums, int start, int end) {
+  static BigInteger listProduct(List<BigInteger> nums, @NonNegative int start, @NonNegative int end) {
     switch (end - start) {
       case 0:
         return BigInteger.ONE;
@@ -416,7 +424,7 @@ public final class BigIntegerMath {
    *
    * @throws IllegalArgumentException if {@code n < 0}, {@code k < 0}, or {@code k > n}
    */
-  public static BigInteger binomial(int n, int k) {
+  public static BigInteger binomial(@NonNegative int n, @NonNegative @LessThan("#1 + 1") int k) {
     checkNonNegative("n", n);
     checkNonNegative("k", k);
     checkArgument(k <= n, "k (%s) > n (%s)", k, n);

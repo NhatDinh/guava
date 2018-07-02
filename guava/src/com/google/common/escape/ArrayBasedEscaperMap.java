@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.VisibleForTesting;
+import org.checkerframework.checker.index.qual.LTLengthOf;
 import java.util.Collections;
 import java.util.Map;
 
@@ -65,6 +66,11 @@ public final class ArrayBasedEscaperMap {
   // Creates a replacement array from the given map. The returned array is a
   // linear lookup table of replacement character sequences indexed by the
   // original character value.
+  @SuppressWarnings(value = {"lowerbound:array.length.negative", "lowerbound:array.access.unsafe.low",//char types are non negative: https://github.com/kelloggm/checker-framework/issues/192
+          "upperbound:enhancedfor.type.incompatible"/* LTLengthOf("replacements") is not possible because `replacements` is declare after `map`
+          Since `max` is maximum value out of all Keys in map and `max + 1` is length of `replacements` array.
+          Char `c`is always less than length of `replacements`
+          */})
   @VisibleForTesting
   static char[][] createReplacementArray(Map<Character, String> map) {
     checkNotNull(map); // GWT specific check (do not optimize)
@@ -73,7 +79,7 @@ public final class ArrayBasedEscaperMap {
     }
     char max = Collections.max(map.keySet());
     char[][] replacements = new char[max + 1][];
-    for (char c : map.keySet()) {
+    for (@LTLengthOf("replacements") char c : map.keySet()) {
       replacements[c] = map.get(c).toCharArray();
     }
     return replacements;
