@@ -16,6 +16,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
+import org.checkerframework.common.value.qual.MinLen;
 
 /**
  * One or more variables that together maintain an initially zero {@code long} sum. When updates
@@ -57,7 +58,7 @@ final class LongAdder extends Striped64 implements Serializable, LongAddable {
   public void add(long x) {
     Cell[] as;
     long b, v;
-    int[] hc;
+    int @MinLen(1)[] hc;
     Cell a;
     int n;
     if ((as = cells) != null || !casBase(b = base, b + x)) {
