@@ -32,6 +32,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import org.checkerframework.checker.index.qual.IndexFor;
+import org.checkerframework.checker.index.qual.LessThan;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.Positive;
+import org.checkerframework.common.value.qual.IntRange;
+import org.checkerframework.common.value.qual.MinLen;
 
 /**
  * A class for arithmetic on values of type {@code int}. Where possible, methods are defined and
@@ -99,8 +105,10 @@ public final class IntMath {
    * a signed int. The implementation is branch-free, and benchmarks suggest it is measurably (if
    * narrowly) faster than the straightforward ternary expression.
    */
+  @SuppressWarnings("return.type.incompatible")// Since `Integer.SIZE - 1` bits form is: 1111, for shifted( >>> ) positive values return 1,
+  //otherwise return 0.
   @VisibleForTesting
-  static int lessThanBranchFree(int x, int y) {
+  static @IntRange(from = 0, to = 1) int lessThanBranchFree(int x, int y) {
     // The double negation is optimized away by normal Java, but is necessary for GWT
     // to make sure bit twiddling works as expected.
     return ~~(x - y) >>> (Integer.SIZE - 1);
@@ -155,10 +163,14 @@ public final class IntMath {
    *     is not a power of ten
    */
   @GwtIncompatible // need BigIntegerMath to adequately test
-  @SuppressWarnings("fallthrough")
-  public static int log10(int x, RoundingMode mode) {
+  @SuppressWarnings({"fallthrough",
+          "lowerbound:assignment.type.incompatible",/* line 172: only time when logFloor = log10Floor(x) is negative is
+          when `x` is 0, and that can't be because log10() only takes in positive `x` */
+          "upperbound:assignment.type.incompatible"/* since all elements in `maxLog10ForLeadingZeros` array
+          is @LTLengthOf("powersOf10","halfPowersOf10"), log10Floor() always return indexed values for `powersOf10` and `halfPowersOf10` */})
+  public static int log10(@Positive int x, RoundingMode mode) {
     checkPositive("x", x);
-    int logFloor = log10Floor(x);
+    @IndexFor(value = {"powersOf10","halfPowersOf10"}) int logFloor = log10Floor(x);
     int floorPow = powersOf10[logFloor];
     switch (mode) {
       case UNNECESSARY:
@@ -180,7 +192,9 @@ public final class IntMath {
     }
   }
 
-  private static int log10Floor(int x) {
+  @SuppressWarnings("lowerbound:return.type.incompatible")/* only time when log10Floor(x) return negative values
+  and x < y, and that can't be because log10() only takes in positive `x` */
+  private static @IndexFor(value = {"powersOf10", "halfPowersOf10"}) int log10Floor(int x) {
     /*
      * Based on Hacker's Delight Fig. 11-5, the two-table-lookup, branch-free implementation.
      *
@@ -198,19 +212,19 @@ public final class IntMath {
 
   // maxLog10ForLeadingZeros[i] == floor(log10(2^(Long.SIZE - i)))
   @VisibleForTesting
-  static final byte[] maxLog10ForLeadingZeros = {
+  static final @IndexFor(value = {"powersOf10", "halfPowersOf10"}) byte @MinLen(33)[] maxLog10ForLeadingZeros = {
     9, 9, 9, 8, 8, 8, 7, 7, 7, 6, 6, 6, 6, 5, 5, 5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 1, 1, 1, 0, 0, 0,
     0
   };
 
   @VisibleForTesting
-  static final int[] powersOf10 = {
+  static final int @MinLen(10)[] powersOf10 = {
     1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000
   };
 
   // halfPowersOf10[i] = largest int less than 10^(i + 0.5)
   @VisibleForTesting
-  static final int[] halfPowersOf10 = {
+  static final int @MinLen(10)[] halfPowersOf10 = {
     3, 31, 316, 3162, 31622, 316227, 3162277, 31622776, 316227766, Integer.MAX_VALUE
   };
 
@@ -619,7 +633,7 @@ public final class IntMath {
    *
    * @throws IllegalArgumentException if {@code n < 0}
    */
-  public static int factorial(int n) {
+  public static int factorial(@NonNegative int n) {
     checkNonNegative("n", n);
     return (n < factorials.length) ? factorials[n] : Integer.MAX_VALUE;
   }
@@ -646,7 +660,7 @@ public final class IntMath {
    *
    * @throws IllegalArgumentException if {@code n < 0}, {@code k < 0} or {@code k > n}
    */
-  public static int binomial(int n, int k) {
+  public static int binomial(@NonNegative int n, @NonNegative @LessThan("#1 + 1") int k) {
     checkNonNegative("n", n);
     checkNonNegative("k", k);
     checkArgument(k <= n, "k (%s) > n (%s)", k, n);
