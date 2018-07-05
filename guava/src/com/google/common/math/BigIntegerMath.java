@@ -147,10 +147,8 @@ public final class BigIntegerMath {
    *     is not a power of ten
    */
   @GwtIncompatible // TODO
-  @SuppressWarnings({"fallthrough",
-          "lowerbound:argument.type.incompatible"// BigIntegerMath.log10() only takes in positive x values
-          })
-  public static int log10(@Positive BigInteger x, RoundingMode mode) {
+  @SuppressWarnings("fallthrough")
+  public static int log10(BigInteger x, RoundingMode mode) {
     checkPositive("x", x);
     if (fitsInLong(x)) {
       return LongMath.log10(x.longValue(), mode);
@@ -337,9 +335,8 @@ public final class BigIntegerMath {
    *
    * @throws IllegalArgumentException if {@code n < 0}
    */
-  @SuppressWarnings(value = {"lowerbound:assignment.type.incompatible",// line 350: Since `n` is required to be non negative
-          // IntMath.divide() will also return a non negative value
-  })
+  @SuppressWarnings("lowerbound:assignment.type.incompatible")/* (1): Since `n` is required to be non negative,
+  IntMath.divide() return a non negative value */
   public static BigInteger factorial(@NonNegative int n) {
     checkNonNegative("n", n);
 
@@ -349,7 +346,7 @@ public final class BigIntegerMath {
     }
 
     // Pre-allocate space for our list of intermediate BigIntegers.
-    @NonNegative int approxSize = IntMath.divide(n * IntMath.log2(n, CEILING), Long.SIZE, CEILING);
+    @NonNegative int approxSize = IntMath.divide(n * IntMath.log2(n, CEILING), Long.SIZE, CEILING);//(1)
     ArrayList<BigInteger> bignums = new ArrayList<>(approxSize);
 
     // Start from the pre-computed maximum long factorial.

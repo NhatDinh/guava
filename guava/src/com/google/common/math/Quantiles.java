@@ -281,8 +281,8 @@ public final class Quantiles {
      *     be arbitrarily reordered by this method call
      * @return the quantile value
      */
-    @SuppressWarnings({"lowerbound:assignment.type.incompatible",// Since index and (dataset.length - 1) are non-negative ints, numerator is non negative.
-            "upperbound:argument.type.incompatible", "upperbound:array.access.unsafe.high",/* when remainder is not zero,
+    @SuppressWarnings({"lowerbound:assignment.type.incompatible",// (0): Since index and (dataset.length - 1) are non-negative ints, numerator is non negative.
+            "upperbound:argument.type.incompatible", "upperbound:array.access.unsafe.high",/* (1)(2): when remainder is not zero,
             quotient max value is `dataset.length - 2`*/
             "upperbound:assignment.type.incompatible"/* Since `numerator = index * (dataset.length - 1)`,
             dividing it to scale will return a value less than length of `dataset`. */})
@@ -299,7 +299,7 @@ public final class Quantiles {
 
       // Since index and (dataset.length - 1) are non-negative ints, their product can be expressed
       // as a long, without risk of overflow:
-      @NonNegative long numerator = (long) index * (dataset.length - 1);
+      @NonNegative long numerator = (long) index * (dataset.length - 1);//(0)
       // Since scale is a positive int, index is in [0, scale], and (dataset.length - 1) is a
       // non-negative int, we can do long-arithmetic on index * (dataset.length - 1) / scale to get
       // a rounded ratio and a remainder which can be expressed as ints, without risk of overflow:
@@ -309,8 +309,8 @@ public final class Quantiles {
       if (remainder == 0) {
         return dataset[quotient];
       } else {
-        selectInPlace(quotient + 1, dataset, quotient + 1, dataset.length - 1);
-        return interpolate(dataset[quotient], dataset[quotient + 1], remainder, scale);
+        selectInPlace(quotient + 1, dataset, quotient + 1, dataset.length - 1);//(1)
+        return interpolate(dataset[quotient], dataset[quotient + 1], remainder, scale);//(2)
       }
     }
   }
@@ -395,7 +395,7 @@ public final class Quantiles {
      * @return an unmodifiable map of results: the keys will be the specified quantile indexes, and
      *     the values the corresponding quantile values
      */
-    @SuppressWarnings({"upperbound:assignment.type.incompatible",// (0): indexes` array is annotated to have min length of 1( which is > 0).
+    @SuppressWarnings({"upperbound:assignment.type.incompatible",// indexes` array is annotated to have min length of 1( which is > 0).
             "upperbound:compound.assignment.type.incompatible",/* (1): Since `requiredSelections.length = indexes.length * 2`, and the for loop
             iterate from 0 to indexes.length, increment on requiredSelectionsCount is safe thoughout the loop.
             */
@@ -540,8 +540,8 @@ public final class Quantiles {
    * ({@code required}, {@code to}] are greater than or equal to that value. Therefore, the value at
    * {@code required} is the value which would appear at that index in the sorted dataset.
    */
-  @SuppressWarnings(value = {"lowerbound:assignment.type.incompatible",//line 555: lowest possible while `to` > 0, `partionPoint` value is 1, therefore `to` can't be negative.
-          "upperbound:assignment.type.incompatible"/* line 559: highest possible `partionPoint` value is array.length / 2 or (array.length / 2) + 1.
+  @SuppressWarnings(value = {"lowerbound:assignment.type.incompatible",//(1): lowest possible while `to` > 0, `partionPoint` value is 1, therefore `to` can't be negative.
+          "upperbound:assignment.type.incompatible"/* (2): highest possible `partionPoint` value is array.length / 2 or (array.length / 2) + 1.
           Even with highest `required` value, `from` can only grow to array.length.
           */})
   private static void selectInPlace(@IndexFor("#2") int required, double[] array, @IndexFor("#2") int from, @IndexFor("#2") int to) {
@@ -566,10 +566,10 @@ public final class Quantiles {
     while (to > from) {
       int partitionPoint = partition(array, from, to);
       if (partitionPoint >= required) {
-        to = partitionPoint - 1;
+        to = partitionPoint - 1;//(1)
       }
       if (partitionPoint <= required) {
-        from = partitionPoint + 1;
+        from = partitionPoint + 1;//(2)
       }
     }
   }
@@ -582,8 +582,8 @@ public final class Quantiles {
    * equal to the value at {@code ret} and the values with indexes in ({@code ret}, {@code to}] are
    * greater than or equal to that.
    */
-  @SuppressWarnings("lowerbound:compound.assignment.type.incompatible")//line 581: `i` needs to be at least at 1 in order to execute for loop
-  // Therefore, `partionPoint` can't be negative
+  @SuppressWarnings("lowerbound:compound.assignment.type.incompatible")// (1): Lowest possible `from` value is 0, Since for loop init at `i = to`, `to` needs to be at least at 1 in order to execute for loop
+  // If `to` is at least 1, `partionPoint` can't be negative
   private static @IndexFor("#1") int partition(double[] array, @IndexFor("#1") int from, @IndexFor("#1") int to) {
     // Select a pivot, and move it to the start of the slice i.e. to index from.
     movePivotToStartOfSlice(array, from, to);
@@ -595,7 +595,7 @@ public final class Quantiles {
     for (int i = to; i > from; i--) {
       if (array[i] > pivot) {
         swap(array, partitionPoint, i);
-        partitionPoint--;
+        partitionPoint--;//(1)
       }
     }
 
