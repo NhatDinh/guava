@@ -318,7 +318,7 @@ public final class Quantiles {
       for (int index : indexes) {
         checkIndex(index, scale);
       }
-      checkNonEmptyArray(indexes);
+      checkArgument(indexes.length > 0, "Indexes must be a non empty array");
       this.scale = scale;
       this.indexes = indexes;
     }
@@ -473,13 +473,6 @@ public final class Quantiles {
     if (index < 0 || index > scale) {
       throw new IllegalArgumentException(
           "Quantile indexes must be between 0 and the scale, which is " + scale);
-    }
-  }
-
-  private static void checkNonEmptyArray(int[] indexes){
-    if (indexes.length == 0){
-      throw new IllegalArgumentException(
-              "Indexes must be a non empty array");
     }
   }
 
