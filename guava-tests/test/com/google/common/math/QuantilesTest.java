@@ -701,15 +701,6 @@ public class QuantilesTest extends TestCase {
     }
   }
 
-  public void testEmpty_indexes(){
-    int[] empty_indexes = {};//visible for testing
-    try {
-      Quantiles.ScaleAndIndexes intermidiate = Quantiles.scale(10).indexes(empty_indexes);
-      fail("Expected IllegalArgumentException");
-    } catch (IllegalArgumentException expected){
-    }
-  }
-
   public void testScale_indexes_varargs_compute_doubleCollection_empty() {
     Quantiles.ScaleAndIndexes intermediate = Quantiles.scale(10).indexes(1, 3, 5);
     try {
@@ -752,6 +743,15 @@ public class QuantilesTest extends TestCase {
       intermediate.computeInPlace(new double[] {});
       fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  public void testIndexes_empty(){
+    int[] empty_indexes = {};//visible for testing
+    try {
+      Quantiles.ScaleAndIndexes intermediate = Quantiles.scale(10).indexes(empty_indexes);
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException expected){
     }
   }
 }
