@@ -747,7 +747,7 @@ public class QuantilesTest extends TestCase {
   }
 
   public void testIndexes_empty() {
-    int[] empty_indexes = {};//visible for testing
+    int[] empty_indexes = {};
     try {
       Quantiles.ScaleAndIndexes intermediate = Quantiles.scale(10).indexes(empty_indexes);
       fail("Expected IllegalArgumentException");
