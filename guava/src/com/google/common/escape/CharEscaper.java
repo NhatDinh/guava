@@ -18,10 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
-import org.checkerframework.checker.index.qual.IndexOrHigh;
-import org.checkerframework.checker.index.qual.LTEqLengthOf;
-import org.checkerframework.checker.index.qual.LTLengthOf;
-import org.checkerframework.checker.index.qual.LessThan;
 
 /**
  * An object that converts literal text into a format safe for inclusion in a particular context
@@ -97,19 +93,14 @@ public abstract class CharEscaper extends Escaper {
    * @return the escaped form of {@code string}
    * @throws NullPointerException if {@code string} is null
    */
-  @SuppressWarnings(value = {"upperbound:assignment.type.incompatible",/*
-   (1) Because of System.arraycopy() method, `rlen` is required to be @LTLengthOf(value={"r", "dest"}, offset={"-1", "destIndex - 1"}).
-   Since r = escape(), can't annotate `escape()` return type as @LTLengthOf(value={"r", "dest"}, offset={"-1", "destIndex - 1"}).*/
-          "upperbound:compound.assignment.type.incompatible"/*(2): `destIndex` is always @LTEqLengthOf("dest") because `dest` array
-          will always be regrow when `destSize` is less than `sizeNeeded`*/})
-  protected final String escapeSlow(String s, @IndexOrHigh("#1") int index) {
+  protected final String escapeSlow(String s, int index) {
     int slen = s.length();
 
     // Get a destination buffer and setup some loop variables.
     char[] dest = Platform.charBufferFromThreadLocal();
     int destSize = dest.length;
-    @LTEqLengthOf("dest") @LessThan("destSize + 1") int destIndex = 0;
-    @LTEqLengthOf("s") int lastEscape = 0;
+    int destIndex = 0;
+    int lastEscape = 0;
 
     // Loop through the rest of the string, replacing when needed into the
     // destination buffer, which gets grown as needed as well.
@@ -123,7 +114,7 @@ public abstract class CharEscaper extends Escaper {
         continue;
       }
 
-      @LTLengthOf(value={"r", "dest"}, offset={"-1", "destIndex - 1"}) int rlen = r.length;//(1)
+      int rlen = r.length;
       int charsSkipped = index - lastEscape;
 
       // This is the size needed to add the replacement, not the full size
@@ -143,7 +134,7 @@ public abstract class CharEscaper extends Escaper {
 
       // Copy the replacement string into the dest buffer as needed.
       if (rlen > 0) {
-        System.arraycopy(r, 0, dest, destIndex, rlen);//(2)
+        System.arraycopy(r, 0, dest, destIndex, rlen);
         destIndex += rlen;
       }
       lastEscape = index + 1;
@@ -156,7 +147,7 @@ public abstract class CharEscaper extends Escaper {
       if (destSize < sizeNeeded) {
 
         // Regrow and copy, expensive! No padding as this is the final copy.
-        dest = growBuffer(dest, destIndex, sizeNeeded);//(2)
+        dest = growBuffer(dest, destIndex, sizeNeeded);
       }
       s.getChars(lastEscape, slen, dest, destIndex);
       destIndex = sizeNeeded;
@@ -168,9 +159,7 @@ public abstract class CharEscaper extends Escaper {
    * Helper method to grow the character buffer as needed, this only happens once in a while so it's
    * ok if it's in a method call. If the index passed in is 0 then no copying will be done.
    */
-  @SuppressWarnings("upperbound:argument.type.incompatible")//index should infer @LessThan("#3 + 1") as same as @LTEqLengthOf("copy")
-  //this is a similar improvement to this issue: https://github.com/typetools/checker-framework/issues/2029
-  private static char[] growBuffer(char[] dest, @LTEqLengthOf("#1") @LessThan("#3 + 1")  int index, int size) {
+  private static char[] growBuffer(char[] dest, int index, int size) {
     if (size < 0) { // overflow - should be OutOfMemoryError but GWT/j2cl don't support it
       throw new AssertionError("Cannot increase internal buffer any further");
     }
