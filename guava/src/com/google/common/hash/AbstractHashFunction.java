@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkPositionIndexes;
 import com.google.errorprone.annotations.Immutable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import org.checkerframework.checker.index.qual.NonNegative;
 
 /**
  * Skeleton implementation of {@link HashFunction} in terms of {@link #newHasher()}.
@@ -60,7 +61,7 @@ abstract class AbstractHashFunction implements HashFunction {
   }
 
   @Override
-  public HashCode hashBytes(byte[] input, int off, int len) {
+  public HashCode hashBytes(byte[] input, @NonNegative int off, @NonNegative int len) {
     checkPositionIndexes(off, off + len, input.length);
     return newHasher(len).putBytes(input, off, len).hash();
   }

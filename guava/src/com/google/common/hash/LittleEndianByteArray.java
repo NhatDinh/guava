@@ -16,6 +16,10 @@ package com.google.common.hash;
 
 import com.google.common.primitives.Longs;
 import java.nio.ByteOrder;
+import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.LengthOf;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.common.value.qual.MinLen;
 import sun.misc.Unsafe;
 
 /**
@@ -54,16 +58,19 @@ final class LittleEndianByteArray {
    * @param length the number of bytes from the input to read
    * @return a long of a concatenated 8 bytes
    */
-  static long load64Safely(byte[] input, int offset, int length) {
+  @SuppressWarnings("upperbound:assignment.type.incompatible")/* (1): `limit` is `input.length` if input.length < 8, otherwise `limit` is 8
+  (2): if `limit` is less than `input.length - offset`, `offset + i` array access in for loop is safe.
+  */
+  static long load64Safely(byte[] input, @NonNegative int offset, @LengthOf("#1") int length) {
     long result = 0;
     // Due to the way we shift, we can stop iterating once we've run out of data, the rest
     // of the result already being filled with zeros.
 
     // This loop is critical to performance, so please check HashBenchmark if altering it.
-    int limit = Math.min(length, 8);
+    @NonNegative @LTLengthOf(value = "#1", offset = "#2") int limit = Math.min(length, 8);//(1)
     for (int i = 0; i < limit; i++) {
       // Shift value left while iterating logically through the array.
-      result |= (input[offset + i] & 0xFFL) << (i * 8);
+      result |= (input[offset + i] & 0xFFL) << (i * 8);//(2)
     }
     return result;
   }
@@ -89,7 +96,7 @@ final class LittleEndianByteArray {
    * @param offset the offset into the array at which to start
    * @return the value found in the array in the form of a long
    */
-  static int load32(byte[] source, int offset) {
+  static int load32(byte[] source, @NonNegative @LTLengthOf(value = "#1", offset = "4") int offset) {
     // TODO(user): Measure the benefit of delegating this to LittleEndianBytes also.
     return (source[offset] & 0xFF)
         | ((source[offset + 1] & 0xFF) << 8)
@@ -206,7 +213,7 @@ final class LittleEndianByteArray {
   private enum JavaLittleEndianBytes implements LittleEndianBytes {
     INSTANCE {
       @Override
-      public long getLongLittleEndian(byte[] source, int offset) {
+      public long getLongLittleEndian(byte[] source, @NonNegative @LTLengthOf(value = "#1", offset = "7") int offset) {
         return Longs.fromBytes(
             source[offset + 7],
             source[offset + 6],
@@ -218,8 +225,10 @@ final class LittleEndianByteArray {
             source[offset]);
       }
 
+      @SuppressWarnings("upperbound:array.access.unsafe.high")/* Since `sink` should have at least 8 elements, and `offset + 7` is less
+      than sink.length, array access in for loop is safe. */
       @Override
-      public void putLongLittleEndian(byte[] sink, int offset, long value) {
+      public void putLongLittleEndian(byte @MinLen(8)[] sink, @NonNegative @LTLengthOf(value = "#1", offset = "7") int offset, long value) {
         long mask = 0xFFL;
         for (int i = 0; i < 8; mask <<= 8, i++) {
           sink[offset + i] = (byte) ((value & mask) >> (i * 8));
