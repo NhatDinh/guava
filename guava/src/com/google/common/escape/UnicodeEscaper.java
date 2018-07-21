@@ -127,8 +127,11 @@ public abstract class UnicodeEscaper extends Escaper {
    * @throws IllegalArgumentException if the scanned sub-sequence of {@code csq} contains invalid
    *     surrogate pairs
    */
-  protected int nextEscapeIndex(CharSequence csq, int start, int end) {
-    int index = start;
+  @SuppressWarnings("upperbound:compound.assignment.type.incompatible")/* (1) In char arrays and CharSequence and its subclasses, two chars are used to represent
+          unicode characters that are outside the range of a 16-bit char character. If cp is in the larger range then there is guaranteed to be another
+          character following the one located at index, which is the rest of the unicode character. */
+  protected @IndexOrHigh("#1") int nextEscapeIndex(CharSequence csq, @IndexOrHigh("#1") int start, @IndexOrHigh("#1") int end) {
+    @IndexOrHigh("#1") int index = start;
     while (index < end) {
       int cp = codePointAt(csq, index, end);
       if (cp < 0 || escape(cp) != null) {
@@ -154,7 +157,19 @@ public abstract class UnicodeEscaper extends Escaper {
    * @throws NullPointerException if {@code string} is null
    * @throws IllegalArgumentException if invalid surrogate characters are encountered
    */
-  protected final String escapeSlow(String s, int index) {
+  @SuppressWarnings(value = {"upperbound:compound.assignment.type.incompatible",/*
+          (1): `destIndex` is always @LTEqLengthOf("dest") @LessThan("destSize + 1") because `dest` array
+          will always be regrow when `destSize` is less than `sizeNeeded` */
+          "upperbound:argument.type.incompatible",/*
+          (2): Because of System.arraycopy() method, `escaped.length` is required to be
+          @LTLengthOf(value={"escaped", "dest"}, offset={"-1", "destIndex - 1"}).
+          `escaped.length + destIndex - 1 < dest.length` is true because when `dest.length < sizeNeeded`,
+          `dest.length` regrow to new `destLength = destIndex + charsSkipped + escaped.length + (end - index) + DEST_PAD`
+          Since escaped.length is length of `escaped`, it should already be inferred to have length of @LTLengthOf(value="escaped", offset="-1") */
+          "upperbound:assignment.type.incompatible"/* (3): In char arrays and CharSequence and its subclasses, two chars are used to represent
+          unicode characters that are outside the range of a 16-bit char character. If cp is in the larger range then there is guaranteed to be another
+          character following the one located at index, which is the rest of the unicode character. */})
+  protected final String escapeSlow(String s, @IndexOrHigh("#1") int index) {
     int end = s.length();
 
     // Get a destination buffer and setup some loop variables.
