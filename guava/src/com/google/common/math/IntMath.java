@@ -105,7 +105,7 @@ public final class IntMath {
    * a signed int. The implementation is branch-free, and benchmarks suggest it is measurably (if
    * narrowly) faster than the straightforward ternary expression.
    */
-  @SuppressWarnings("value:return.type.incompatible")// Since `Integer.SIZE - 1` bits form is: 1111, for shifted( >>> ) positive values return 1,
+  @SuppressWarnings("return.type.incompatible")// Since `Integer.SIZE - 1` bits form is: 1111, for shifted( >>> ) positive values return 1,
   //otherwise return 0.
   @VisibleForTesting
   static @IntRange(from = 0, to = 1) int lessThanBranchFree(int x, int y) {
@@ -163,10 +163,14 @@ public final class IntMath {
    *     is not a power of ten
    */
   @GwtIncompatible // need BigIntegerMath to adequately test
-  @SuppressWarnings("fallthrough")
+  @SuppressWarnings({"fallthrough",
+          "lowerbound:assignment.type.incompatible",/* (1): only time when logFloor = log10Floor(x) is negative is
+          when `x` is 0, and that can't be because log10() only takes in positive `x` */
+          "upperbound:assignment.type.incompatible"/* since all elements in `maxLog10ForLeadingZeros` array
+          is @LTLengthOf("powersOf10","halfPowersOf10"), log10Floor() always return indexed values for `powersOf10` and `halfPowersOf10` */})
   public static int log10(@Positive int x, RoundingMode mode) {
     checkPositive("x", x);
-    int logFloor = log10Floor(x);//(1)
+    @IndexFor(value = {"powersOf10","halfPowersOf10"}) int logFloor = log10Floor(x);//(1)
     int floorPow = powersOf10[logFloor];
     switch (mode) {
       case UNNECESSARY:
