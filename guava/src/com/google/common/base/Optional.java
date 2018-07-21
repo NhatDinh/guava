@@ -24,8 +24,6 @@ import java.util.Set;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
-import org.checkerframework.framework.qual.AnnotatedFor;
-import org.checkerframework.framework.qual.Covariant;
 
 /**
  * An immutable object that may contain a non-null reference to another object. Each instance of
@@ -83,10 +81,8 @@ import org.checkerframework.framework.qual.Covariant;
  * @author Kevin Bourrillion
  * @since 10.0
  */
-@AnnotatedFor({"nullness"})
-@Covariant(0)
 @GwtCompatible(serializable = true)
-public abstract @NonNull class Optional<T> implements Serializable {
+public abstract class Optional<T> implements Serializable {
   /**
    * Returns an {@code Optional} instance with no contained reference.
    *
@@ -126,8 +122,6 @@ public abstract @NonNull class Optional<T> implements Serializable {
    *
    * @since 21.0
    */
-  @SuppressWarnings("nullness:return.type.incompatible") // Known issue with behaviour of @PolyNull
-  // with ternary operator, see: https://github.com/typetools/checker-framework/issues/1170
   public static <T> @PolyNull Optional<T> fromJavaUtil(
       java.util.@PolyNull Optional<T> javaUtilOptional) {
     return (javaUtilOptional == null) ? null : fromNullable(javaUtilOptional.orElse(null));
@@ -146,8 +140,6 @@ public abstract @NonNull class Optional<T> implements Serializable {
    *
    * @since 21.0
    */
-  @SuppressWarnings("nullness:return.type.incompatible") // Known issue with behaviour of @PolyNull
-  // with ternary operator, see: https://github.com/typetools/checker-framework/issues/1170
   public static <T> java.util.@PolyNull Optional<T> toJavaUtil(
       @PolyNull Optional<T> googleOptional) {
     return googleOptional == null ? null : googleOptional.toJavaUtil();
@@ -225,7 +217,7 @@ public abstract @NonNull class Optional<T> implements Serializable {
    * must be used instead). As a result, the value returned by this method is guaranteed non-null,
    * which is not the case for the {@code java.util} equivalent.
    */
-  public abstract @NonNull T or(@NonNull T defaultValue);
+  public abstract T or(T defaultValue);
 
   /**
    * Returns this {@code Optional} if it has a value present; {@code secondChoice} otherwise.
@@ -345,8 +337,6 @@ public abstract @NonNull class Optional<T> implements Serializable {
               checkNotNull(optionals.iterator());
 
           @Override
-          @SuppressWarnings("nullness:return.type.incompatible") // If endOfData is invoked during
-          // execution the returned value is ignored
           protected T computeNext() {
             while (iterator.hasNext()) {
               Optional<? extends T> optional = iterator.next();
