@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.google.guava</groupId>
     <artifactId>guava-parent</artifactId>
-    <version>25.1.0.1-jre</version>
+    <version>25.1-jre</version>
   </parent>
   <artifactId>guava</artifactId>
   <packaging>bundle</packaging>
@@ -22,7 +22,7 @@
     <!-- Index checker warnings are disabled by default, because not all code is annotated by index checker annotations. -->
     <checkerframework.suppress>index</checkerframework.suppress>
     <!-- Packages under com.google.common, that will be additionally checked by the Index Checker -->
-    <checkerframework.index.packages>base|primitives|escape|math</checkerframework.index.packages>
+    <checkerframework.index.packages>base|primitives|escape|math|hash</checkerframework.index.packages>
     <annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
     <!-- Additional argument passed to the java compiler. Use to pass additional arguments to the checker framework. Example: -Ashowchecks -->
     <checkerframework.extraargs></checkerframework.extraargs>
@@ -64,18 +64,18 @@
     <dependency>
       <groupId>org.checkerframework</groupId>
       <artifactId>checker-qual</artifactId>
-      <version>2.5.3</version>
+      <version>2.5.1</version>
     </dependency>
     -->
     <dependency>
       <groupId>org.checkerframework</groupId>
       <artifactId>checker</artifactId>
-      <version>2.5.3</version>
+      <version>2.5.1</version>
     </dependency>
     <dependency>
       <groupId>org.checkerframework</groupId>
       <artifactId>jdk8</artifactId>
-      <version>2.5.3</version>
+      <version>2.5.1</version>
     </dependency>
   </dependencies>
   <build>
