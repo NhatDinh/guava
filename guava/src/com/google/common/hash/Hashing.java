@@ -28,7 +28,11 @@ import java.util.zip.Adler32;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 import javax.crypto.spec.SecretKeySpec;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.Positive;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.common.value.qual.IntRange;
+import org.checkerframework.common.value.qual.MinLen;
 
 /**
  * Static methods to obtain {@link HashFunction} instances, and other static hashing-related
@@ -61,7 +65,7 @@ public final class Hashing {
    * @return a hash function, described above, that produces hash codes of length {@code
    *     minimumBits} or greater
    */
-  public static HashFunction goodFastHash(int minimumBits) {
+  public static HashFunction goodFastHash(@Positive int minimumBits) {
     int bits = checkPositiveAndMakeMultipleOf32(minimumBits);
 
     if (bits == 32) {
@@ -87,6 +91,7 @@ public final class Hashing {
    * Used to randomize {@link #goodFastHash} instances, so that programs which persist anything
    * dependent on the hash codes they produce will fail sooner.
    */
+  @SuppressWarnings("GoodTime") // reading system time without TimeSource
   static final int GOOD_FAST_HASH_SEED = (int) System.currentTimeMillis();
 
   /**
@@ -521,6 +526,8 @@ public final class Hashing {
    * @throws IllegalArgumentException if {@code hashCodes} is empty, or the hash codes do not all
    *     have the same bit length
    */
+  @SuppressWarnings("value:argument.type.incompatible")// `hashCode.asBytes()` return an array with min length of 1.
+  //Since nextBytes.length is checked to have same bit length with resultBytes.length, resultBytes also needs min length of 1.
   public static HashCode combineOrdered(Iterable<HashCode> hashCodes) {
     Iterator<HashCode> iterator = hashCodes.iterator();
     checkArgument(iterator.hasNext(), "Must be at least 1 hash code to combine.");
@@ -534,7 +541,7 @@ public final class Hashing {
         resultBytes[i] = (byte) (resultBytes[i] * 37 ^ nextBytes[i]);
       }
     }
-    return HashCode.fromBytesNoCopy(resultBytes);
+    return HashCode.fromBytesNoCopy(resultBytes);//(1)
   }
 
   /**
@@ -546,6 +553,8 @@ public final class Hashing {
    * @throws IllegalArgumentException if {@code hashCodes} is empty, or the hash codes do not all
    *     have the same bit length
    */
+  @SuppressWarnings("value:argument.type.incompatible")// `hashCode.asBytes()` return an array with min length of 1.
+  //Since nextBytes.length is checked to have same bit length with resultBytes.length, resultBytes also needs min length of 1.
   public static HashCode combineUnordered(Iterable<HashCode> hashCodes) {
     Iterator<HashCode> iterator = hashCodes.iterator();
     checkArgument(iterator.hasNext(), "Must be at least 1 hash code to combine.");
@@ -562,7 +571,7 @@ public final class Hashing {
   }
 
   /** Checks that the passed argument is positive, and ceils it to a multiple of 32. */
-  static int checkPositiveAndMakeMultipleOf32(int bits) {
+  static @IntRange(from=32) int checkPositiveAndMakeMultipleOf32(int bits) {
     checkArgument(bits > 0, "Number of bits must be positive");
     return (bits + 31) & ~31;
   }
@@ -633,7 +642,7 @@ public final class Hashing {
     }
 
     @Override
-    public int bits() {
+    public @NonNegative int bits() {
       int bitSum = 0;
       for (HashFunction function : functions) {
         bitSum += function.bits();
@@ -669,7 +678,7 @@ public final class Hashing {
 
     public double nextDouble() {
       state = 2862933555777941757L * state + 1;
-      return ((double) ((int) (state >>> 33) + 1)) / (0x1.0p31);
+      return ((double) ((int) (state >>> 33) + 1)) / 0x1.0p31;
     }
   }
 

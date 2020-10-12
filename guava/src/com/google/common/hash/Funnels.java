@@ -19,7 +19,10 @@ import com.google.common.base.Preconditions;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import org.checkerframework.checker.index.qual.LTLengthOf;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.common.value.qual.MinLen;
 
 /**
  * Funnels for common types. All implementations are serializable.
@@ -39,7 +42,8 @@ public final class Funnels {
   private enum ByteArrayFunnel implements Funnel<byte[]> {
     INSTANCE;
 
-    public void funnel(byte[] from, PrimitiveSink into) {
+    @Override
+    public void funnel(byte @MinLen(1)[] from, PrimitiveSink into) {
       into.putBytes(from);
     }
 
@@ -63,7 +67,8 @@ public final class Funnels {
   private enum UnencodedCharsFunnel implements Funnel<CharSequence> {
     INSTANCE;
 
-    public void funnel(CharSequence from, PrimitiveSink into) {
+    @Override
+    public void funnel(@MinLen(1) CharSequence from, PrimitiveSink into) {
       into.putUnencodedChars(from);
     }
 
@@ -90,7 +95,8 @@ public final class Funnels {
       this.charset = Preconditions.checkNotNull(charset);
     }
 
-    public void funnel(CharSequence from, PrimitiveSink into) {
+    @Override
+    public void funnel(@MinLen(1) CharSequence from, PrimitiveSink into) {
       into.putString(from, charset);
     }
 
@@ -144,6 +150,7 @@ public final class Funnels {
   private enum IntegerFunnel implements Funnel<Integer> {
     INSTANCE;
 
+    @Override
     public void funnel(Integer from, PrimitiveSink into) {
       into.putInt(from);
     }
@@ -171,6 +178,7 @@ public final class Funnels {
       this.elementFunnel = Preconditions.checkNotNull(elementFunnel);
     }
 
+    @Override
     public void funnel(Iterable<? extends E> from, PrimitiveSink into) {
       for (E e : from) {
         elementFunnel.funnel(e, into);
@@ -209,6 +217,7 @@ public final class Funnels {
   private enum LongFunnel implements Funnel<Long> {
     INSTANCE;
 
+    @Override
     public void funnel(Long from, PrimitiveSink into) {
       into.putLong(from);
     }
@@ -245,13 +254,14 @@ public final class Funnels {
       sink.putByte((byte) b);
     }
 
+    @SuppressWarnings("override.param.invalid")//OutputStream#write() should be annotated as void write(byte @MinLen(1)[] bytes)
     @Override
-    public void write(byte[] bytes) {
+    public void write(byte @MinLen(1)[] bytes) {
       sink.putBytes(bytes);
     }
 
     @Override
-    public void write(byte[] bytes, int off, int len) {
+    public void write(byte[] bytes, @NonNegative @LTLengthOf(value = "#1", offset = "#3 - 1") int off, @NonNegative @LTLengthOf(value = "#1", offset = "#2 - 1") int len) {
       sink.putBytes(bytes, off, len);
     }
 

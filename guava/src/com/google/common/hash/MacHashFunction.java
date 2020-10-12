@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.errorprone.annotations.Immutable;
+import org.checkerframework.checker.index.qual.NonNegative;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -34,22 +35,26 @@ final class MacHashFunction extends AbstractHashFunction {
 
   @SuppressWarnings("Immutable") // cloned before each use
   private final Mac prototype;
+
   @SuppressWarnings("Immutable") // keys are immutable, but not provably so
   private final Key key;
+
   private final String toString;
-  private final int bits;
+  private final @NonNegative int bits;
   private final boolean supportsClone;
 
+  @SuppressWarnings("lowerbound:assignment.type.incompatible")/*(1): method `engineGetMacLength()` in the pre-compiled class `MacSpi`
+  should be annotated to return @NonNegative value */
   MacHashFunction(String algorithmName, Key key, String toString) {
     this.prototype = getMac(algorithmName, key);
     this.key = checkNotNull(key);
     this.toString = checkNotNull(toString);
-    this.bits = prototype.getMacLength() * Byte.SIZE;
+    this.bits = prototype.getMacLength() * Byte.SIZE;//(1)
     this.supportsClone = supportsClone(prototype);
   }
 
   @Override
-  public int bits() {
+  public @NonNegative int bits() {
     return bits;
   }
 
@@ -129,6 +134,7 @@ final class MacHashFunction extends AbstractHashFunction {
       checkState(!done, "Cannot re-use a Hasher after calling hash() on it");
     }
 
+    @SuppressWarnings("value:argument.type.incompatible")// Max#doFinal() should be annotated as @MinLen(1) doFinal()
     @Override
     public HashCode hash() {
       checkNotDone();
